@@ -1,5 +1,5 @@
 import { Component, AfterContentInit, Input, OnDestroy, EventEmitter, Output, ContentChildren, QueryList } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Subscription, Observable, observable } from 'rxjs';
 
 import { NgWizardDataService } from '../ng-wizard-data.service';
 import { NgWizardConfig, NgWizardStep, ToolbarButton, StepChangedArgs } from '../../utils/interfaces';
@@ -31,6 +31,8 @@ export class NgWizardComponent implements OnDestroy, AfterContentInit {
   @Output() stepChanged = new EventEmitter<StepChangedArgs>();
   @Output() themeChanged = new EventEmitter<THEME>();
   @Output() reseted = new EventEmitter<void>();
+  @Input()
+  showStepValidator: (event: Event, selectedStep: NgWizardStep) => Observable<boolean>;
 
   styles: {
     main?: string;
@@ -218,7 +220,24 @@ export class NgWizardComponent implements OnDestroy, AfterContentInit {
 
   _showSelectedStep(event: Event, selectedStep: NgWizardStep) {
     event.preventDefault();
+    console.log('-----------------------------------');
+    console.log('NUEVA VERSION DE WIZARD!!!');
+    console.log('-----------------------------------');
+    // Si se suministro una funcion de validacion de cambio de paso
+    if (this.showStepValidator) {
+      this.showStepValidator(event, selectedStep).subscribe(result => {
+        // Si la validacion es correcta
+        if (result) {
+          // Proceder con el cambio de paso
+          this.doShowSelected(event, selectedStep);
+        }
+      });
+    } else { // Sino, proceder con el cambio de paso
+      this.doShowSelected(event, selectedStep);
+    }
+  }
 
+  doShowSelected(event: Event, selectedStep: NgWizardStep) {
     if (!this.config.anchorSettings.anchorClickable) {
       return;
     }
